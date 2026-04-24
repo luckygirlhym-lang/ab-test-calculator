@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AB 实验决策分析仪</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Serif+SC:wght@400;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --surface: #ffffff;
+    --surface2: #f0f2f5;
+    --border: #dde1e9;
+    --accent: #0a7c5c;
+    --accent2: #1a6fd4;
+    --warn: #b87800;
+    --danger: #d63148;
+    --text: #1a1e2e;
+    --text2: #5a6478;
+    --text3: #9aa3b4;
+    --mono: 'IBM Plex Mono', 'Space Mono', monospace;
+    --serif: 'Noto Serif SC', serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.55;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* Header */
+  header {
+    padding: 40px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 40px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+  }
+
+  .header-left h1 {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    color: var(--text);
+  }
+
+  .header-left h1 span {
+    color: var(--accent);
+  }
+
+  .header-left p {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text2);
+    letter-spacing: 0.5px;
+  }
+
+  .badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 2px;
+    letter-spacing: 1.5px;
+    white-space: nowrap;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 32px;
+    background: var(--surface);
+    padding: 4px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    color: var(--text2);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s;
+  }
+
+  .tab:hover { color: var(--text); }
+
+  .tab.active {
+    background: #ffffff;
+    color: var(--accent);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+
+  /* Layout grid */
+  .layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    animation: fadeUp 0.3s ease;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-title {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--text2);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title::before {
+    content: '';
+    width: 3px;
+    height: 14px;
+    background: var(--accent);
+    display: block;
+    border-radius: 2px;
+  }
+
+  /* Form */
+  .form-group {
+    margin-bottom: 16px;
+  }
+
+  label {
+    display: block;
+    font-size: 11px;
+    color: var(--text2);
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+
+  label span {
+    color: var(--accent);
+    margin-left: 4px;
+  }
+
+  input[type="number"], input[type="text"], select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 9px 12px;
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  input:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(10,124,92,0.1);
+  }
+
+  select option { background: var(--surface); }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .hint {
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 4px;
+    letter-spacing: 0.3px;
+  }
+
+  /* Button */
+  .btn-run {
+    width: 100%;
+    padding: 13px;
+    margin-top: 8px;
+    background: var(--accent);
+    color: #0a0c10;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+  }
+
+  .btn-run:hover {
+    background: #0b9470;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(10,124,92,0.25);
+  }
+
+  .btn-run:active { transform: translateY(0); }
+
+  /* Divider in form */
+  .form-section {
+    margin: 20px 0 16px;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--text3);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .form-section::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Results panel */
+  .results-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 380px;
+    color: var(--text3);
+    font-size: 12px;
+    letter-spacing: 1px;
+    gap: 16px;
+  }
+
+  .results-empty .icon {
+    font-size: 36px;
+    opacity: 0.3;
+    filter: grayscale(1);
+  }
+
+  /* Result sections */
+  .result-section {
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .result-section-head {
+    padding: 10px 16px;
+    background: var(--surface2);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .result-section-body {
+    padding: 16px;
+  }
+
+  /* Metric display */
+  .metric-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .metric-row:last-child { border-bottom: none; }
+
+  .metric-label { color: var(--text2); }
+
+  .metric-value {
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+  }
+
+  .v-green { color: var(--accent); }
+  .v-red { color: var(--danger); }
+  .v-yellow { color: var(--warn); }
+  .v-blue { color: var(--accent2); }
+  .v-white { color: var(--text); }
+
+  /* Big verdict */
+  .verdict {
+    padding: 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border: 1px solid;
+    animation: fadeUp 0.4s ease;
+  }
+
+  .verdict.pass {
+    background: rgba(10,124,92,0.06);
+    border-color: rgba(10,124,92,0.25);
+  }
+
+  .verdict.warn {
+    background: rgba(184,120,0,0.06);
+    border-color: rgba(184,120,0,0.25);
+  }
+
+  .verdict.fail {
+    background: rgba(214,49,72,0.06);
+    border-color: rgba(214,49,72,0.25);
+  }
+
+  .verdict-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .verdict-body {
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--text2);
+  }
+
+  /* CI visualization */
+  .ci-bar-wrap {
+    padding: 12px 0 4px;
+  }
+
+  .ci-bar-track {
+    position: relative;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    margin: 8px 0;
+  }
+
+  .ci-bar-fill {
+    position: absolute;
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+  }
+
+  .ci-zero {
+    position: absolute;
+    top: -4px;
+    width: 2px;
+    height: 14px;
+    background: var(--danger);
+    border-radius: 1px;
+  }
+
+  .ci-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  /* P-value gauge */
+  .pval-bar-wrap {
+    margin: 8px 0;
+  }
+
+  .pval-track {
+    position: relative;
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: visible;
+  }
+
+  .pval-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s cubic-bezier(.23,1,.32,1);
+  }
+
+  .pval-threshold {
+    position: absolute;
+    top: -4px;
+    width: 2px;
+    height: 16px;
+    background: var(--warn);
+  }
+
+  .pval-threshold::after {
+    content: 'α=0.05';
+    position: absolute;
+    top: -16px;
+    left: 4px;
+    font-size: 9px;
+    color: var(--warn);
+    white-space: nowrap;
+  }
+
+  /* Info table */
+  .info-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  .info-table th {
+    text-align: left;
+    padding: 6px 10px;
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+  }
+
+  .info-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(30,35,48,0.5);
+    color: var(--text);
+  }
+
+  .info-table tr:last-child td { border-bottom: none; }
+
+  .info-table .thl { color: var(--text2); font-size: 11px; }
+
+  /* Sample adequacy bar */
+  .adequacy-wrap { margin: 10px 0; }
+  .adequacy-track {
+    height: 10px;
+    background: var(--surface2);
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .adequacy-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.6s cubic-bezier(.23,1,.32,1);
+  }
+  .adequacy-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  /* Decision matrix */
+  .decision-matrix {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .dm-cell {
+    padding: 12px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    text-align: center;
+    font-size: 11px;
+  }
+
+  .dm-cell .dm-icon { font-size: 20px; margin-bottom: 4px; }
+  .dm-cell .dm-label { color: var(--text2); font-size: 10px; letter-spacing: 0.5px; }
+  .dm-cell .dm-val { font-size: 13px; font-weight: 700; margin: 3px 0; }
+
+  .dm-cell.ok { background: rgba(10,124,92,0.05); border-color: rgba(10,124,92,0.2); }
+  .dm-cell.warn { background: rgba(184,120,0,0.05); border-color: rgba(184,120,0,0.2); }
+  .dm-cell.fail { background: rgba(214,49,72,0.05); border-color: rgba(214,49,72,0.2); }
+  .dm-cell.info { background: rgba(26,111,212,0.05); border-color: rgba(26,111,212,0.2); }
+
+  /* Sample size tab */
+  .ss-output {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px;
+    margin-top: 16px;
+    font-size: 12px;
+    line-height: 2;
+  }
+
+  .ss-big {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -1px;
+  }
+
+  .ss-sub {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: -4px;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .tag-pass { background: rgba(10,124,92,0.12); color: var(--accent); padding: 2px 8px; border-radius: 2px; font-size: 10px; }
+  .tag-fail { background: rgba(214,49,72,0.12); color: var(--danger); padding: 2px 8px; border-radius: 2px; font-size: 10px; }
+  .tag-warn { background: rgba(184,120,0,0.12); color: var(--warn); padding: 2px 8px; border-radius: 2px; font-size: 10px; }
+
+  /* Separator */
+  hr.sep { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+
+  .footnote {
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 16px;
+    line-height: 1.8;
+    letter-spacing: 0.3px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-left">
+      <h1>AB实验 <span>决策分析仪</span></h1>
+      <p>SIGNIFICANCE TEST · CONFIDENCE INTERVAL · SAMPLE SIZE ADEQUACY</p>
+    </div>
+    <div class="badge">v1.0 STATISTICAL ENGINE</div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('abtest')">📊 显著性检验 &amp; 决策</button>
+    <button class="tab" onclick="switchTab('samplesize')">🎯 样本量计算</button>
+  </div>
+
+  <!-- Page: AB Test -->
+  <div id="page-abtest" class="page active">
+    <div class="layout">
+
+      <!-- Input Panel -->
+      <div class="card">
+        <div class="card-title">输入实验数据</div>
+
+        <!-- Metric type -->
+        <div class="form-group">
+          <label>指标类型 <span>*</span></label>
+          <select id="metricType" onchange="onMetricTypeChange()">
+            <option value="proportion">比例类（转化率 / 点击率 / 购买率）</option>
+            <option value="mean">均值类（金额 / 时长 / 次数）</option>
+          </select>
+        </div>
+
+        <!-- Test type -->
+        <div class="form-group">
+          <label>检验方向</label>
+          <select id="testType">
+            <option value="two">双侧检验（检验是否有差异）</option>
+            <option value="right">右侧单尾（检验实验组是否更高）</option>
+            <option value="left">左侧单尾（检验实验组是否更低）</option>
+          </select>
+        </div>
+
+        <div class="form-section">对照组 A</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label id="label-a">转化率 <span>*</span></label>
+            <input type="number" id="metric_a" placeholder="如 0.10" step="0.001">
+            <div class="hint" id="hint-a">输入小数（如 0.10 = 10%）</div>
+          </div>
+          <div class="form-group">
+            <label>样本量 <span>*</span></label>
+            <input type="number" id="n_a" placeholder="如 5000" min="1">
+          </div>
+        </div>
+
+        <div id="std-a-wrap" class="form-group" style="display:none">
+          <label>标准差 σ_A <span>*</span></label>
+          <input type="number" id="std_a" placeholder="如 50" step="0.1">
+          <div class="hint">可从历史数据获取；若未知填均值的50%</div>
+        </div>
+
+        <div class="form-section">实验组 B</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label id="label-b">转化率 <span>*</span></label>
+            <input type="number" id="metric_b" placeholder="如 0.12" step="0.001">
+            <div class="hint" id="hint-b">输入小数（如 0.12 = 12%）</div>
+          </div>
+          <div class="form-group">
+            <label>样本量 <span>*</span></label>
+            <input type="number" id="n_b" placeholder="如 5000" min="1">
+          </div>
+        </div>
+
+        <div id="std-b-wrap" class="form-group" style="display:none">
+          <label>标准差 σ_B</label>
+          <input type="number" id="std_b" placeholder="如 52（可与A相同）" step="0.1">
+          <div class="hint">如未知，默认与 σ_A 相同</div>
+        </div>
+
+        <div class="form-section">检验参数</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>显著性水平 α</label>
+            <select id="alpha_val">
+              <option value="0.05" selected>0.05（常用）</option>
+              <option value="0.01">0.01（严格）</option>
+              <option value="0.10">0.10（宽松）</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>统计功效 Power</label>
+            <select id="power_val">
+              <option value="0.8" selected>0.80（推荐）</option>
+              <option value="0.9">0.90（高要求）</option>
+              <option value="0.7">0.70（探索）</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>MDE（最小检测效应）<span style="color:var(--text3)">可选</span></label>
+          <input type="number" id="mde_val" placeholder="如比例类填 0.02，均值类填绝对差" step="0.001">
+          <div class="hint">用于判断样本量充分性；不填则根据实际差异反推</div>
+        </div>
+
+        <button class="btn-run" onclick="runAnalysis()">▶ RUN ANALYSIS</button>
+      </div>
+
+      <!-- Results Panel -->
+      <div id="results-panel">
+        <div class="card">
+          <div id="results-empty" class="results-empty">
+            <div class="icon">⚗️</div>
+            <div>输入实验数据后点击 RUN ANALYSIS</div>
+          </div>
+          <div id="results-content" style="display:none"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Page: Sample Size Calculator -->
+  <div id="page-samplesize" class="page">
+    <div class="layout">
+      <div class="card">
+        <div class="card-title">样本量计算器</div>
+
+        <div class="form-group">
+          <label>指标类型</label>
+          <select id="ss_type" onchange="onSSTypeChange()">
+            <option value="proportion">比例类</option>
+            <option value="mean">均值类</option>
+          </select>
+        </div>
+
+        <div class="form-section">参数设置</div>
+
+        <div id="ss-proportion-fields">
+          <div class="form-group">
+            <label>基准转化率 p_a <span>*</span></label>
+            <input type="number" id="ss_pa" placeholder="如 0.10" step="0.001" min="0.001" max="0.999">
+            <div class="hint">对照组当前转化率（小数）</div>
+          </div>
+          <div class="form-group">
+            <label>最小检测效应 MDE <span>*</span></label>
+            <input type="number" id="ss_mde_p" placeholder="如 0.02（代表提升2%）" step="0.001">
+            <div class="hint">你希望能检测到的最小变化（绝对值）</div>
+          </div>
+        </div>
+
+        <div id="ss-mean-fields" style="display:none">
+          <div class="form-group">
+            <label>基准均值 mean_a <span>*</span></label>
+            <input type="number" id="ss_mean" placeholder="如 100" step="0.1">
+          </div>
+          <div class="form-group">
+            <label>标准差 σ <span>*</span></label>
+            <input type="number" id="ss_std" placeholder="如 50" step="0.1">
+          </div>
+          <div class="form-group">
+            <label>最小检测效应 MDE（绝对值）<span>*</span></label>
+            <input type="number" id="ss_mde_m" placeholder="如 10（代表提升10元）" step="0.1">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>显著性水平 α</label>
+            <select id="ss_alpha">
+              <option value="0.05" selected>0.05</option>
+              <option value="0.01">0.01</option>
+              <option value="0.10">0.10</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>统计功效</label>
+            <select id="ss_power">
+              <option value="0.8" selected>0.80</option>
+              <option value="0.9">0.90</option>
+              <option value="0.7">0.70</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>检验方向</label>
+          <select id="ss_testtype">
+            <option value="two">双侧检验</option>
+            <option value="one">单侧检验</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>每日新增流量（可选）</label>
+          <input type="number" id="ss_daily" placeholder="如 10000" min="1">
+          <div class="hint">用于估算实验运行天数</div>
+        </div>
+
+        <button class="btn-run" onclick="calcSampleSize()">▶ 计算所需样本量</button>
+      </div>
+
+      <div class="card" id="ss-result-card">
+        <div class="card-title">计算结果</div>
+        <div id="ss-results-empty" class="results-empty">
+          <div class="icon">📐</div>
+          <div>填写参数后点击计算</div>
+        </div>
+        <div id="ss-results-content" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// Statistics Engine
+// ============================================================
+
+// Normal CDF approximation (Hart)
+function normCDF(z) {
+  const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+  const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+  const sign = z < 0 ? -1 : 1;
+  z = Math.abs(z) / Math.sqrt(2);
+  const t = 1 / (1 + p * z);
+  const y = 1 - (((((a5*t + a4)*t + a3)*t + a2)*t + a1)*t) * Math.exp(-z*z);
+  return 0.5 * (1 + sign * y);
+}
+
+// Inverse normal CDF (Beasley-Springer-Moro approximation)
+function normInv(p) {
+  if (p <= 0) return -Infinity;
+  if (p >= 1) return Infinity;
+  const a = [2.515517, 0.802853, 0.010328];
+  const b = [1.432788, 0.189269, 0.001308];
+  function rational(t) {
+    return (a[0] + t*(a[1] + t*a[2])) / (1 + t*(b[0] + t*(b[1] + t*b[2])));
+  }
+  if (p < 0.5) {
+    const t = Math.sqrt(-2 * Math.log(p));
+    return -(t - rational(t));
+  } else {
+    const t = Math.sqrt(-2 * Math.log(1-p));
+    return t - rational(t);
+  }
+}
+
+function getZ(alpha, testType) {
+  if (testType === 'two') return normInv(1 - alpha/2);
+  return normInv(1 - alpha);
+}
+
+function pValue(z, testType) {
+  if (testType === 'two') return 2 * (1 - normCDF(Math.abs(z)));
+  if (testType === 'right') return 1 - normCDF(z);
+  return normCDF(z);
+}
+
+function fmt(n, decimals = 4) {
+  if (n === null || isNaN(n)) return 'N/A';
+  return parseFloat(n.toFixed(decimals)).toString();
+}
+
+function fmtPct(n, dec = 2) {
+  if (n === null || isNaN(n)) return 'N/A';
+  return (n * 100).toFixed(dec) + '%';
+}
+
+function fmtNum(n, dec = 0) {
+  if (n === null || isNaN(n)) return 'N/A';
+  return Math.ceil(n).toLocaleString();
+}
+
+// ============================================================
+// UI Logic
+// ============================================================
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', (i === 0 && tab==='abtest') || (i === 1 && tab==='samplesize'));
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+}
+
+function onMetricTypeChange() {
+  const isProp = document.getElementById('metricType').value === 'proportion';
+  document.getElementById('std-a-wrap').style.display = isProp ? 'none' : 'block';
+  document.getElementById('std-b-wrap').style.display = isProp ? 'none' : 'block';
+  document.getElementById('label-a').textContent = isProp ? '转化率 *' : '均值 *';
+  document.getElementById('label-b').textContent = isProp ? '转化率 *' : '均值 *';
+  document.getElementById('hint-a').textContent = isProp ? '输入小数（如 0.10 = 10%）' : '输入数值（如 100）';
+  document.getElementById('hint-b').textContent = isProp ? '输入小数（如 0.12 = 12%）' : '输入数值（如 112）';
+}
+
+function onSSTypeChange() {
+  const isProp = document.getElementById('ss_type').value === 'proportion';
+  document.getElementById('ss-proportion-fields').style.display = isProp ? 'block' : 'none';
+  document.getElementById('ss-mean-fields').style.display = isProp ? 'none' : 'block';
+}
+
+// ============================================================
+// AB Test Analysis
+// ============================================================
+
+function runAnalysis() {
+  const mtype = document.getElementById('metricType').value;
+  const ttype = document.getElementById('testType').value;
+  const alpha = parseFloat(document.getElementById('alpha_val').value);
+  const power = parseFloat(document.getElementById('power_val').value);
+
+  const metric_a = parseFloat(document.getElementById('metric_a').value);
+  const metric_b = parseFloat(document.getElementById('metric_b').value);
+  const n_a = parseInt(document.getElementById('n_a').value);
+  const n_b = parseInt(document.getElementById('n_b').value);
+  const mde_input = parseFloat(document.getElementById('mde_val').value);
+
+  // Validate
+  if (isNaN(metric_a) || isNaN(metric_b) || isNaN(n_a) || isNaN(n_b)) {
+    alert('请填写完整的指标值和样本量！');
+    return;
+  }
+
+  let z_stat, p_val, ci_low, ci_high, se_diff, se_test;
+  let n_required;
+  const Z_alpha = getZ(alpha, ttype);
+  const Z_beta = normInv(power);
+
+  // ---- Proportion ----
+  if (mtype === 'proportion') {
+    if (metric_a <= 0 || metric_a >= 1 || metric_b <= 0 || metric_b >= 1) {
+      alert('比例类指标请输入 0~1 之间的小数！');
+      return;
+    }
+    // Z test pooled
+    const p_pool = (metric_a * n_a + metric_b * n_b) / (n_a + n_b);
+    se_test = Math.sqrt(p_pool * (1 - p_pool) * (1/n_a + 1/n_b));
+    z_stat = (metric_b - metric_a) / se_test;
+    p_val = pValue(z_stat, ttype);
+
+    // CI (unpooled SE)
+    se_diff = Math.sqrt(metric_a*(1-metric_a)/n_a + metric_b*(1-metric_b)/n_b);
+    const z_ci = normInv(1 - alpha/2);
+    const diff = metric_b - metric_a;
+    ci_low = diff - z_ci * se_diff;
+    ci_high = diff + z_ci * se_diff;
+
+    // Required sample size
+    const mde = isNaN(mde_input) ? Math.abs(metric_b - metric_a) : mde_input;
+    const pb = metric_a + mde;
+    const pavg = (metric_a + pb) / 2;
+    const num = Z_alpha * Math.sqrt(2 * pavg * (1-pavg)) + Z_beta * Math.sqrt(metric_a*(1-metric_a) + pb*(1-pb));
+    n_required = (num * num) / (mde * mde);
+
+  // ---- Mean ----
+  } else {
+    let std_a = parseFloat(document.getElementById('std_a').value);
+    let std_b = parseFloat(document.getElementById('std_b').value);
+    if (isNaN(std_a)) { alert('均值类指标需填写标准差 σ_A！'); return; }
+    if (isNaN(std_b)) std_b = std_a;
+
+    se_diff = Math.sqrt(std_a*std_a/n_a + std_b*std_b/n_b);
+    z_stat = (metric_b - metric_a) / se_diff;
+    p_val = pValue(z_stat, ttype);
+
+    const z_ci = normInv(1 - alpha/2);
+    const diff = metric_b - metric_a;
+    ci_low = diff - z_ci * se_diff;
+    ci_high = diff + z_ci * se_diff;
+
+    const mde = isNaN(mde_input) ? Math.abs(metric_b - metric_a) : mde_input;
+    const sigma = (std_a + std_b) / 2;
+    n_required = 2 * Math.pow((Z_alpha + Z_beta) * sigma / mde, 2);
+  }
+
+  // Sample adequacy
+  const n_min = Math.min(n_a, n_b);
+  const ratio = n_min / n_required;
+
+  // Effect size
+  const diff = metric_b - metric_a;
+  let effect_label, cohen_d = null;
+  if (mtype === 'proportion') {
+    const rel = metric_a > 0 ? diff / metric_a : 0;
+    effect_label = (rel * 100).toFixed(2) + '% 相对提升';
+  } else {
+    const std_a_v = parseFloat(document.getElementById('std_a').value);
+    const std_b_v = parseFloat(document.getElementById('std_b').value) || std_a_v;
+    const sp = Math.sqrt((std_a_v*std_a_v + std_b_v*std_b_v) / 2);
+    cohen_d = diff / sp;
+    const dl = Math.abs(cohen_d);
+    effect_label = dl < 0.2 ? '微小效应' : dl < 0.5 ? '小效应' : dl < 0.8 ? '中等效应' : '大效应';
+  }
+
+  renderResults({
+    mtype, ttype, alpha, power, n_a, n_b,
+    metric_a, metric_b, diff,
+    z_stat, p_val, ci_low, ci_high,
+    n_required, n_min, ratio,
+    effect_label, cohen_d,
+    is_sig: p_val <= alpha,
+    ci_has_zero: ci_low <= 0 && ci_high >= 0,
+    sample_ok: n_min >= n_required
+  });
+}
+
+function renderResults(r) {
+  const sig = r.is_sig;
+  const sample_ok = r.sample_ok;
+  const mtype = r.mtype;
+
+  // Overall verdict
+  let vClass, vIcon, vTitle, vMsg;
+  if (sig && sample_ok) {
+    vClass = 'pass'; vIcon = '✅';
+    vTitle = '结论可信 · 建议推进';
+    vMsg = `P值显著（p=${fmt(r.p_val,4)}）且样本量充分，两组差异在统计上真实存在。实验结论可靠，可以考虑上线或进一步决策。`;
+  } else if (sig && !sample_ok) {
+    vClass = 'warn'; vIcon = '⚠️';
+    vTitle = '谨慎判断 · 建议继续实验';
+    vMsg = `P值显著（p=${fmt(r.p_val,4)}），但样本量尚不足（当前约为所需的${(r.ratio*100).toFixed(0)}%），存在假阳性风险。建议继续收集数据至所需样本量后再确认结论。`;
+  } else if (!sig && sample_ok) {
+    vClass = 'fail'; vIcon = '❌';
+    vTitle = '差异不显著 · 不建议上线';
+    vMsg = `P值不显著（p=${fmt(r.p_val,4)}），样本量已充分。当前证据不支持实验组优于对照组，实验可能确实无效。`;
+  } else {
+    vClass = 'warn'; vIcon = '⏳';
+    vTitle = '数据不足 · 继续观察';
+    vMsg = `P值不显著（p=${fmt(r.p_val,4)}），且样本量不足（当前约为所需的${(r.ratio*100).toFixed(0)}%）。暂时无法得出可靠结论，需要更多实验数据。`;
+  }
+
+  // P-value bar: show where p falls on 0-1 scale
+  const pBarPct = Math.min(r.p_val * 100, 100);
+  const threshPct = r.alpha * 100;
+  const pColor = sig ? 'var(--accent)' : 'var(--danger)';
+
+  // CI bar visualization
+  const ciRange = r.ci_high - r.ci_low;
+  const bufPct = ciRange * 0.15;
+  const xMin = r.ci_low - bufPct;
+  const xMax = r.ci_high + bufPct;
+  const xSpan = xMax - xMin;
+  const fillLeft = ((r.ci_low - xMin) / xSpan * 100).toFixed(1);
+  const fillWidth = (ciRange / xSpan * 100).toFixed(1);
+  const zeroPos = xMin <= 0 && xMax >= 0 ? ((-xMin) / xSpan * 100).toFixed(1) : null;
+
+  // Adequacy bar
+  const adeqPct = Math.min(r.ratio * 100, 100).toFixed(0);
+  const adeqColor = r.sample_ok ? 'var(--accent)' : r.ratio > 0.6 ? 'var(--warn)' : 'var(--danger)';
+
+  const html = `
+    <div class="verdict ${vClass}">
+      <div class="verdict-title">${vIcon} ${vTitle}</div>
+      <div class="verdict-body">${vMsg}</div>
+    </div>
+
+    <div class="decision-matrix">
+      <div class="dm-cell ${sig ? 'ok' : 'fail'}">
+        <div class="dm-icon">${sig ? '✅' : '❌'}</div>
+        <div class="dm-label">显著性</div>
+        <div class="dm-val" style="color:${sig?'var(--accent)':'var(--danger)'}">${sig ? '显著' : '不显著'}</div>
+        <div class="dm-label">p = ${fmt(r.p_val, 4)}</div>
+      </div>
+      <div class="dm-cell ${sample_ok ? 'ok' : 'warn'}">
+        <div class="dm-icon">${sample_ok ? '✅' : '⚠️'}</div>
+        <div class="dm-label">样本充分性</div>
+        <div class="dm-val" style="color:${adeqColor}">${adeqPct}%</div>
+        <div class="dm-label">${sample_ok ? '已满足' : '不足'}</div>
+      </div>
+      <div class="dm-cell ${!r.ci_has_zero ? 'ok' : 'fail'}">
+        <div class="dm-icon">${!r.ci_has_zero ? '✅' : '⚠️'}</div>
+        <div class="dm-label">置信区间</div>
+        <div class="dm-val" style="font-size:11px;color:${!r.ci_has_zero?'var(--accent)':'var(--warn)'}">
+          ${!r.ci_has_zero ? '不含零' : '含零'}
+        </div>
+        <div class="dm-label">${!r.ci_has_zero ? '差异可信' : '不确定'}</div>
+      </div>
+    </div>
+
+    <hr class="sep">
+
+    <!-- Section 1: Significance -->
+    <div class="result-section">
+      <div class="result-section-head">
+        <span>一、显著性检验（P-value）</span>
+        <span class="${sig ? 'tag-pass' : 'tag-fail'}">${sig ? '✓ 显著' : '✗ 不显著'}</span>
+      </div>
+      <div class="result-section-body">
+        <div class="metric-row">
+          <span class="metric-label">检验方法</span>
+          <span class="metric-value v-white">${mtype==='proportion'?'双比例 Z 检验':'双均值 Z 检验'} · ${r.ttype==='two'?'双侧':'单侧'}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Z 统计量</span>
+          <span class="metric-value v-blue">${fmt(r.z_stat, 4)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">P 值</span>
+          <span class="metric-value" style="color:${pColor}">${fmt(r.p_val, 6)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">显著性水平 α</span>
+          <span class="metric-value v-white">${r.alpha}</span>
+        </div>
+
+        <div class="pval-bar-wrap" style="margin-top:12px">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">P 值位置（越靠左越显著）</div>
+          <div class="pval-track">
+            <div class="pval-fill" style="width:${pBarPct}%;background:${pColor}"></div>
+            <div class="pval-threshold" style="left:${threshPct}%"></div>
+          </div>
+          <div class="ci-labels">
+            <span>0</span>
+            <span>α=${r.alpha}</span>
+            <span>1.0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: CI -->
+    <div class="result-section">
+      <div class="result-section-head">
+        <span>二、置信区间（${((1-r.alpha)*100).toFixed(0)}% CI）</span>
+        <span class="${!r.ci_has_zero ? 'tag-pass' : 'tag-warn'}">${!r.ci_has_zero ? '不含零' : '含零'}</span>
+      </div>
+      <div class="result-section-body">
+        <div class="metric-row">
+          <span class="metric-label">B 相对 A 的差异</span>
+          <span class="metric-value" style="color:${r.diff>=0?'var(--accent)':'var(--danger)'}">
+            ${r.diff >= 0 ? '+' : ''}${mtype==='proportion' ? fmtPct(r.diff,3) : fmt(r.diff,3)}
+          </span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">置信区间下限</span>
+          <span class="metric-value v-white">${mtype==='proportion' ? fmtPct(r.ci_low,3) : fmt(r.ci_low,3)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">置信区间上限</span>
+          <span class="metric-value v-white">${mtype==='proportion' ? fmtPct(r.ci_high,3) : fmt(r.ci_high,3)}</span>
+        </div>
+
+        <div class="ci-bar-wrap">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">差异区间可视化</div>
+          <div class="ci-bar-track">
+            <div class="ci-bar-fill" style="left:${fillLeft}%;width:${fillWidth}%"></div>
+            ${zeroPos !== null ? `<div class="ci-zero" style="left:${zeroPos}%"></div>` : ''}
+          </div>
+          <div class="ci-labels">
+            <span>${mtype==='proportion' ? fmtPct(r.ci_low - (r.ci_high-r.ci_low)*0.15,2) : fmt(r.ci_low-(r.ci_high-r.ci_low)*0.15,2)}</span>
+            <span style="color:${!r.ci_has_zero?'var(--accent)':'var(--warn)'}">
+              [${mtype==='proportion'?fmtPct(r.ci_low,2):fmt(r.ci_low,2)}, ${mtype==='proportion'?fmtPct(r.ci_high,2):fmt(r.ci_high,2)}]
+            </span>
+            <span>${mtype==='proportion' ? fmtPct(r.ci_high+(r.ci_high-r.ci_low)*0.15,2) : fmt(r.ci_high+(r.ci_high-r.ci_low)*0.15,2)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Sample Size -->
+    <div class="result-section">
+      <div class="result-section-head">
+        <span>三、样本量充分性</span>
+        <span class="${r.sample_ok ? 'tag-pass' : 'tag-warn'}">${r.sample_ok ? '✓ 充分' : '⚠ 不足'}</span>
+      </div>
+      <div class="result-section-body">
+        <div class="metric-row">
+          <span class="metric-label">所需样本量（每组）</span>
+          <span class="metric-value v-blue">${fmtNum(r.n_required)}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">实际样本量（A组）</span>
+          <span class="metric-value v-white">${r.n_a.toLocaleString()}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">实际样本量（B组）</span>
+          <span class="metric-value v-white">${r.n_b.toLocaleString()}</span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">样本充足率</span>
+          <span class="metric-value" style="color:${adeqColor}">${(r.ratio*100).toFixed(1)}%</span>
+        </div>
+        ${!r.sample_ok ? `
+        <div class="metric-row">
+          <span class="metric-label">缺口数量（每组）</span>
+          <span class="metric-value v-yellow">≈ ${fmtNum(r.n_required - r.n_min)} 个</span>
+        </div>` : ''}
+
+        <div class="adequacy-wrap" style="margin-top:12px">
+          <div class="adequacy-track">
+            <div class="adequacy-fill" style="width:${adeqPct}%;background:${adeqColor}"></div>
+          </div>
+          <div class="adequacy-labels">
+            <span>0</span>
+            <span>当前: ${adeqPct}%</span>
+            <span>100%（满足）</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Effect Size -->
+    <div class="result-section">
+      <div class="result-section-head"><span>四、效应量评估</span></div>
+      <div class="result-section-body">
+        ${mtype === 'proportion' ? `
+        <div class="metric-row">
+          <span class="metric-label">相对提升</span>
+          <span class="metric-value" style="color:${r.diff>=0?'var(--accent)':'var(--danger)'}">
+            ${r.diff>=0?'+':''}${((r.diff/r.metric_a)*100).toFixed(2)}%
+          </span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">绝对差异</span>
+          <span class="metric-value v-white">${fmtPct(r.diff, 3)}</span>
+        </div>
+        ` : `
+        <div class="metric-row">
+          <span class="metric-label">绝对差异</span>
+          <span class="metric-value" style="color:${r.diff>=0?'var(--accent)':'var(--danger)'}">
+            ${r.diff>=0?'+':''}${fmt(r.diff, 3)}
+          </span>
+        </div>
+        <div class="metric-row">
+          <span class="metric-label">Cohen's d</span>
+          <span class="metric-value v-blue">${r.cohen_d !== null ? fmt(r.cohen_d, 3) : 'N/A'}</span>
+        </div>
+        `}
+        <div class="metric-row">
+          <span class="metric-label">效应强度</span>
+          <span class="metric-value v-yellow">${r.effect_label}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footnote">
+      ※ 所有计算基于中心极限定理正态近似法 · 双侧置信区间取 ${((1-r.alpha)*100).toFixed(0)}%
+      · Power=${r.power} · α=${r.alpha}<br>
+      ※ 比例类检验使用合并比例标准误（pooled SE）· 置信区间使用非合并 SE<br>
+      ※ 建议实验周期至少覆盖完整业务周期（7天），避免新奇效应干扰
+    </div>
+  `;
+
+  document.getElementById('results-empty').style.display = 'none';
+  const content = document.getElementById('results-content');
+  content.style.display = 'block';
+  content.innerHTML = html;
+}
+
+// ============================================================
+// Sample Size Calculator
+// ============================================================
+
+function calcSampleSize() {
+  const stype = document.getElementById('ss_type').value;
+  const alpha = parseFloat(document.getElementById('ss_alpha').value);
+  const power = parseFloat(document.getElementById('ss_power').value);
+  const ttype = document.getElementById('ss_testtype').value;
+  const daily = parseInt(document.getElementById('ss_daily').value);
+
+  const Z_alpha = getZ(alpha, ttype === 'two' ? 'two' : 'right');
+  const Z_beta = normInv(power);
+
+  let n_each, n_total, mde_used, base_val, pb;
+
+  if (stype === 'proportion') {
+    const pa = parseFloat(document.getElementById('ss_pa').value);
+    const mde = parseFloat(document.getElementById('ss_mde_p').value);
+    if (isNaN(pa) || isNaN(mde)) { alert('请填写基准转化率和MDE！'); return; }
+    pb = pa + mde;
+    if (pb >= 1 || pa <= 0) { alert('参数超出有效范围（0~1）'); return; }
+    const pavg = (pa + pb) / 2;
+    const num = Z_alpha * Math.sqrt(2*pavg*(1-pavg)) + Z_beta * Math.sqrt(pa*(1-pa)+pb*(1-pb));
+    n_each = (num*num) / (mde*mde);
+    mde_used = mde;
+    base_val = pa;
+  } else {
+    const mean_a = parseFloat(document.getElementById('ss_mean').value);
+    const std = parseFloat(document.getElementById('ss_std').value);
+    const mde = parseFloat(document.getElementById('ss_mde_m').value);
+    if (isNaN(mean_a) || isNaN(std) || isNaN(mde)) { alert('请填写所有均值类参数！'); return; }
+    n_each = 2 * Math.pow((Z_alpha + Z_beta) * std / mde, 2);
+    mde_used = mde;
+    base_val = mean_a;
+    pb = mean_a + mde;
+  }
+
+  n_total = n_each * 2;
+  const days = !isNaN(daily) && daily > 0 ? Math.ceil(n_total / daily) : null;
+
+  // Power curve data points
+  const powers = [0.7, 0.75, 0.8, 0.85, 0.9, 0.95];
+  const powerRows = powers.map(pw => {
+    const zb = normInv(pw);
+    let n;
+    if (stype === 'proportion') {
+      const pa = parseFloat(document.getElementById('ss_pa').value);
+      const mde = parseFloat(document.getElementById('ss_mde_p').value);
+      const pb2 = pa + mde;
+      const pavg = (pa+pb2)/2;
+      const num = Z_alpha * Math.sqrt(2*pavg*(1-pavg)) + zb * Math.sqrt(pa*(1-pa)+pb2*(1-pb2));
+      n = (num*num)/(mde*mde);
+    } else {
+      const std = parseFloat(document.getElementById('ss_std').value);
+      const mde = parseFloat(document.getElementById('ss_mde_m').value);
+      n = 2 * Math.pow((Z_alpha + zb)*std/mde, 2);
+    }
+    return { pw, n };
+  });
+
+  const html = `
+    <div>
+      <div class="ss-big">${fmtNum(n_each)}</div>
+      <div class="ss-sub">每组所需样本量（共 ${fmtNum(n_total)} 个）</div>
+    </div>
+
+    <hr class="sep">
+
+    <table class="info-table" style="margin-bottom:16px">
+      <tr><th>参数</th><th>数值</th></tr>
+      <tr><td class="thl">指标类型</td><td>${stype==='proportion'?'比例类':'均值类'}</td></tr>
+      <tr><td class="thl">基准值</td><td>${stype==='proportion'?fmtPct(base_val,2):fmt(base_val,2)}</td></tr>
+      <tr><td class="thl">目标值（含MDE）</td><td>${stype==='proportion'?fmtPct(pb,2):fmt(pb,2)}</td></tr>
+      <tr><td class="thl">MDE</td><td>${stype==='proportion'?fmtPct(mde_used,3):fmt(mde_used,3)}</td></tr>
+      <tr><td class="thl">显著性水平 α</td><td>${alpha}</td></tr>
+      <tr><td class="thl">统计功效</td><td>${(power*100).toFixed(0)}%</td></tr>
+      <tr><td class="thl">检验方向</td><td>${ttype==='two'?'双侧':'单侧'}</td></tr>
+      ${days ? `<tr><td class="thl">预计实验天数</td><td style="color:var(--accent)">${days} 天（每日流量 ${daily.toLocaleString()}）</td></tr>` : ''}
+    </table>
+
+    <!-- Power curve table -->
+    <div class="card-title" style="margin-top:0">功效与样本量对照表</div>
+    <table class="info-table">
+      <tr>
+        <th>统计功效</th>
+        <th>每组样本量</th>
+        <th>总样本量</th>
+        ${days ? '<th>预计天数</th>' : ''}
+      </tr>
+      ${powerRows.map(row => `
+        <tr style="${row.pw === power ? 'color:var(--accent)' : ''}">
+          <td>${(row.pw*100).toFixed(0)}%${row.pw===power?' ◀':''}</td>
+          <td>${fmtNum(row.n)}</td>
+          <td>${fmtNum(row.n*2)}</td>
+          ${days ? `<td>${!isNaN(daily)&&daily>0 ? Math.ceil(row.n*2/daily)+'天' : '-'}</td>` : ''}
+        </tr>
+      `).join('')}
+    </table>
+
+    <div class="footnote" style="margin-top:16px">
+      ※ ${stype==='proportion'?'比例类使用正态近似法（双比例Z检验公式）':'均值类公式基于单总体方差假设'}<br>
+      ※ 建议实验周期至少 7 天，确保覆盖完整业务周期
+    </div>
+  `;
+
+  document.getElementById('ss-results-empty').style.display = 'none';
+  const c = document.getElementById('ss-results-content');
+  c.style.display = 'block';
+  c.innerHTML = html;
+  c.style.animation = 'none';
+  c.offsetHeight;
+  c.style.animation = 'fadeUp 0.3s ease';
+}
+</script>
+</body>
+</html>
